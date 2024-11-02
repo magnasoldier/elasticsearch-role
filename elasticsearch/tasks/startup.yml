@@ -1,0 +1,46 @@
+---
+
+- name: Grant all privileges to elastic users
+  file:
+    recurse: true
+    path: "{{ elasticsearch_elastic_path }}"
+    owner: "{{ elasticsearch_elastic_user }}"
+    group: "{{ elasticsearch_elastic_group }}"
+    mode: 0774
+
+- name: Start elastic cluster
+  systemd:
+    daemon_reload: true
+    name: elasticsearch
+    state: restarted
+
+- name: Configure elastic users
+  shell: |
+    {{ elasticsearch_files.elastic_setup_passwords_path }} auto -b
+  register: elastic_users
+  args:
+    executable: /bin/bash
+  retries: 5
+  delay: 10
+  until: elastic_users.rc == 0
+  ignore_errors: yes
+  when: inventory_hostname in groups['master'][0]
+
+- name: Check output
+  debug:
+    msg: "{{ elastic_users.stdout }}"
+  when: inventory_hostname in groups['master'][0]
+
+- name: Create directory for elasticsearch passwords
+  file:
+    state: directory
+    path: "{{ elasticsearch_local_passwords_dir }}"
+  delegate_to: localhost
+  when: inventory_hostname in groups['master'][0] and elastic_users.rc == 0
+
+- name: Save elasticsearch default passwords
+  copy:
+    content: "{{ elastic_users.stdout }}"
+    dest: "{{ elasticsearch_files.local_passwords_path }}"
+  delegate_to: localhost
+  when: inventory_hostname in groups['master'][0] and elastic_users.rc == 0

@@ -1,0 +1,52 @@
+---
+### Basic settings ###
+
+# Name for your cluster
+elasticsearch_cluster_name: "elastic-cluster"
+
+# Base domain for your cluster (used for TLS certs)
+elasticsearch_base_domain: "elastic.example.com"
+
+# Elasticsearch version
+elasticsearch_elastic_version: "8.15.2"
+
+# OS architecture of hosts
+elasticsearch_system_architecture: "linux-x86_64"
+
+# Path of Elasticsearch installation
+elasticsearch_elastic_path: "/opt/elasticsearch"
+
+# Java version
+elasticsearch_java_version: 17
+
+
+### TLS ###
+
+# Enable SSL
+elasticsearch_ssl_enabled: true
+
+# Default names for keys, certificates, truststore and keystore
+elasticsearch_key_name: "{{ inventory_hostname }}-tls-key.pem"
+elasticsearch_cert_name: "{{ inventory_hostname }}-tls-cert.pem"
+elasticsearch_pkcs12_name: "{{ inventory_hostname }}-keystore.p12"
+elasticsearch_truststore_file: "{{ inventory_hostname }}-truststore.jks"
+elasticsearch_ca_cert_name: "ca-cert.pem"
+
+# Default path to certificates directory
+elasticsearch_local_cert_dir: "/tmp/certs"
+
+# Where passwords for default users will be stored on your local machine
+elasticsearch_local_passwords_dir: "/tmp/secrets"
+
+
+### Monitoring
+
+# Log level for base logs
+elasticsearch_log_level: "info"
+
+# Set 'true' to enable monitoring
+elasticsearch_monitoring_enabled: true
+
+
+
+elasticsearch_cert_password: "testpass"

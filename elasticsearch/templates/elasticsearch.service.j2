@@ -1,0 +1,18 @@
+[Unit]
+Description=Elasticsearch
+Documentation=https://www.elastic.co
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User={{ elasticsearch_elastic_user }}
+Group={{ elasticsearch_elastic_group }}
+Environment=ES_PATH_CONF="{{ elasticsearch_directories.elastic_config_dir }}"
+Environment=ES_JAVA_OPTS="-Dlog4j2.configurationFile={{ elasticsearch_files.logging_params_path }}"
+ExecStart={{ elasticsearch_elastic_path }}/bin/elasticsearch
+Restart=on-failure
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

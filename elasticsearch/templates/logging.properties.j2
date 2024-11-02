@@ -1,0 +1,55 @@
+status = error
+
+# Main settings for appenders
+appender.rolling.type = RollingFile
+appender.rolling.name = rolling
+appender.rolling.fileName = /var/log/elasticsearch/elasticsearch.log
+appender.rolling.filePattern = /var/log/elasticsearch/elasticsearch-%d{yyyy-MM-dd}-%i.log.gz
+appender.rolling.layout.type = PatternLayout
+appender.rolling.layout.pattern = [%d{ISO8601}][%-5p][%-25c{1.}] %marker%.10000m%n
+
+# Rotation policies for main logs
+appender.rolling.policies.type = Policies
+appender.rolling.policies.time.type = TimeBasedTriggeringPolicy
+appender.rolling.policies.time.interval = 1
+appender.rolling.policies.time.modulate = true
+appender.rolling.policies.size.type = SizeBasedTriggeringPolicy
+appender.rolling.policies.size.size = 256MB
+
+# Old logs remove policy
+appender.rolling.strategy.type = DefaultRolloverStrategy
+appender.rolling.strategy.max = 7
+
+# Slow queries logs settings
+appender.slow_rolling.type = RollingFile
+appender.slow_rolling.name = slow_rolling
+appender.slow_rolling.fileName = /var/log/elasticsearch/elasticsearch_slowlog.log
+appender.slow_rolling.filePattern = /var/log/elasticsearch/elasticsearch_slowlog-%d{yyyy-MM-dd}-%i.log.gz
+appender.slow_rolling.layout.type = PatternLayout
+appender.slow_rolling.layout.pattern = [%d{ISO8601}][%-5p][%-25c{1.}] %marker%.10000m%n
+
+# Slow queries logs rotation
+appender.slow_rolling.policies.type = Policies
+appender.slow_rolling.policies.time.type = TimeBasedTriggeringPolicy
+appender.slow_rolling.policies.time.interval = 1
+appender.slow_rolling.policies.time.modulate = true
+appender.slow_rolling.policies.size.type = SizeBasedTriggeringPolicy
+appender.slow_rolling.policies.size.size = 256MB
+
+appender.slow_rolling.strategy.type = DefaultRolloverStrategy
+appender.slow_rolling.strategy.max = 7
+
+# Main logs
+rootLogger.level = {{ elasticsearch_log_level }}
+rootLogger.appenderRef.rolling.ref = rolling
+
+# Slow queries logs
+logger.slow_search.name = org.elasticsearch.index.search.slowlog
+logger.slow_search.level = info
+logger.slow_search.appenderRef.slow_rolling.ref = slow_rolling
+logger.slow_search.additivity = false
+
+logger.slow_indexing.name = org.elasticsearch.index.indexing.slowlog
+logger.slow_indexing.level = info
+logger.slow_indexing.appenderRef.slow_rolling.ref = slow_rolling
+logger.slow_indexing.additivity = false

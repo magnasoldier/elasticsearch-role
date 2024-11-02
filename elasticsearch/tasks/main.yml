@@ -1,0 +1,16 @@
+---
+
+- name: Elasticsearch basic installation
+  include_tasks: elastic.yml
+
+- name: Distribute certs
+  include_tasks: distribute_certs.yml
+
+- name: Certificates generation
+  include_tasks: certificates.yml
+
+- name: Start up elastic
+  include_tasks: startup.yml
+
+
+

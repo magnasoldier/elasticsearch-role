@@ -1,0 +1,47 @@
+---
+
+- name: Generate PKCS storage
+  command: >
+    openssl pkcs12
+    -export -out "{{ elasticsearch_directories.certs_dir }}/{{ elasticsearch_pkcs12_name }}"
+    -inkey "{{ elasticsearch_directories.certs_dir }}/{{ elasticsearch_key_name }}"
+    -in "{{ elasticsearch_directories.certs_dir }}/{{ elasticsearch_cert_name }}"
+    -certfile "{{ elasticsearch_directories.certs_dir }}/{{ elasticsearch_ca_cert_name }}"
+    -passin pass:{{ elasticsearch_cert_password }}
+    -passout pass:{{ elasticsearch_cert_password }}
+  args:
+    creates: "{{ elasticsearch_directories.certs_dir }}/{{ elasticsearch_pkcs12_name }}"
+
+- name: Add CA to Truststore
+  command: >
+    keytool -import
+    -alias your-ca
+    -file "{{ elasticsearch_directories.certs_dir }}/{{ elasticsearch_ca_cert_name }}"
+    -keystore "{{ elasticsearch_directories.certs_dir }}/{{ elasticsearch_truststore_file }}"
+    -storepass "{{ elasticsearch_cert_password }}"
+    -noprompt
+  args:
+    creates: "{{ elasticsearch_directories.certs_dir }}/{{ elasticsearch_truststore_file }}"
+
+- name: Grant privileges to elastic user for PKCS
+  file:
+    path: "{{ elasticsearch_directories.certs_dir }}/{{ elasticsearch_pkcs12_name }}"
+    owner: "{{ elasticsearch_elastic_user }}"
+    group: "{{ elasticsearch_elastic_group }}"
+    mode: 0640
+
+- name: Grant privileges to elastic for truststore
+  file:
+    path: "{{ elasticsearch_directories.certs_dir }}/{{ elasticsearch_truststore_file }}"
+    owner: "{{ elasticsearch_elastic_user }}"
+    group: "{{ elasticsearch_elastic_group }}"
+    mode: 0640
+
+- name: Grant all privileges for certs to elastic
+  file:
+    path: "{{ elasticsearch_directories.certs_dir }}"
+    recurse: true
+    owner: "{{ elasticsearch_elastic_user }}"
+    group: "{{ elasticsearch_elastic_group }}"
+    mode: 0770
+

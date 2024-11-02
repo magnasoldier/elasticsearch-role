@@ -1,0 +1,116 @@
+---
+
+- name: Update package list and install required packages
+  apt:
+    update_cache: yes
+    name:
+      - wget
+      - openssl
+      - python3-cryptography
+      - "openjdk-{{ elasticsearch_java_version }}-jdk"
+    state: present
+
+- name: Ensure Elastic user exists
+  user:
+    name: "{{ elasticsearch_elastic_user }}"
+    comment: "Elastic service account"
+    shell: /bin/false
+    create_home: no
+    system: yes
+    state: present
+
+- name: Create Elastic directory
+  file:
+    state: directory
+    path: "{{ elasticsearch_elastic_path }}"
+    mode: 0760
+    owner: "{{ elasticsearch_elastic_user }}"
+    group: "{{ elasticsearch_elastic_group }}"
+
+- name: Create lib directory
+  file:
+    path: "{{ elasticsearch_directories.elastic_lib_directory }}"
+    state: directory
+    owner: "{{ elasticsearch_elastic_user }}"
+    group: "{{ elasticsearch_elastic_group }}"
+    mode: 0774
+
+- name: Create log directory
+  file:
+    path: "{{ elasticsearch_directories.elastic_log_directory }}"
+    state: directory
+    owner: "{{ elasticsearch_elastic_user }}"
+    group: "{{ elasticsearch_elastic_group }}"
+    mode: 0774
+
+- name: Download elastic archive
+  get_url:
+    url: "{{ elasticsearch_urls.elastic_url }}"
+    dest: "{{ elasticsearch_elastic_path }}/{{ elasticsearch_files.elastic_archive }}"
+
+- name: Unpack Elastic archive
+  unarchive:
+    src: "{{ elasticsearch_elastic_path }}/{{ elasticsearch_files.elastic_archive }}"
+    dest: "{{ elasticsearch_elastic_path }}"
+    remote_src: yes
+    extra_opts: [ '--strip-components=1' ]
+
+- name: Create certificates directory
+  file:
+    path: "{{ elasticsearch_directories.certs_dir }}"
+    owner: "{{ elasticsearch_elastic_user }}"
+    group: "{{ elasticsearch_elastic_group }}"
+    mode: 0770
+    state: directory
+
+- name: Remove old configuration
+  file:
+    path: "{{ elasticsearch_files.elastic_config_path }}"
+    state: absent
+
+- name: Generate elastic config from template
+  template:
+    src: elasticsearch.yml.j2
+    dest: "{{ elasticsearch_files.elastic_config_path }}"
+    owner: "{{ elasticsearch_elastic_user }}"
+    group: "{{ elasticsearch_elastic_group }}"
+    mode: 0774
+
+- name: Generate elastic service file
+  template:
+    src: elasticsearch.service.j2
+    dest: "{{ elasticsearch_files.service_file }}"
+
+- name: Create new keystore
+  shell: |
+    {{ elasticsearch_files.elastic_keystore_path }} create
+  args:
+    executable: /bin/bash
+    creates: "{{ elasticsearch_files.elastic_keystore_file }}"
+
+- name: Add passwords to Elasticsearch keystore
+  ignore_errors: true
+  shell: |
+    echo -n "{{ elasticsearch_cert_password }}" | {{ elasticsearch_files.elastic_keystore_path }} add {{ item.key }} --stdin --force
+  loop:
+    - { key: "xpack.security.http.ssl.keystore.secure_password" }
+    - { key: "xpack.security.transport.ssl.keystore.secure_password" }
+    - { key: "xpack.security.http.ssl.truststore.secure_password" }
+    - { key: "xpack.security.transport.ssl.truststore.secure_password" }
+  args:
+    executable: /bin/bash
+
+- name: vm.max_map_count set
+  ansible.builtin.sysctl:
+    name: vm.max_map_count
+    value: "{{ elasticsearch_vm_max_map_count }}"
+    state: present
+    reload: true
+
+- name: Configure elasticsearch logging
+  template:
+    src: logging.properties.j2
+    dest: "{{ elasticsearch_files.logging_params_path }}"
+    owner: "{{ elasticsearch_elastic_user }}"
+    group: "{{ elasticsearch_elastic_group }}"
+    mode: 0664

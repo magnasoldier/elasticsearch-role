@@ -1,0 +1,40 @@
+---
+
+
+elasticsearch_urls:
+  gpg_url: "https://artifacts.elastic.co/GPG-KEY-elasticsearch"
+  elastic_url: "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-{{ elasticsearch_elastic_version }}-{{ elasticsearch_system_architecture }}.tar.gz"
+  elastic_repository: "https://artifacts.elastic.co/packages/8.x/apt"
+
+
+elasticsearch_directories:
+  elastic_lib_directory: "/var/lib/elasticsearch"
+  elastic_log_directory: "/var/log/elasticsearch"
+  elastic_config_dir: "{{ elasticsearch_elastic_path }}/config"
+  certs_dir: "{{ elasticsearch_elastic_path }}/config"
+
+
+
+elasticsearch_files:
+  gpg_path: "/tmp/elastic.gpg"
+  elastic_keystore_path: "{{ elasticsearch_elastic_path }}/bin/elasticsearch-keystore"
+  elastic_setup_passwords_path: "{{ elasticsearch_elastic_path }}/bin/elasticsearch-setup-passwords"
+  elastic_archive: "elastic.tar.gz"
+  elastic_config_path: "{{ elasticsearch_directories.elastic_config_dir }}/elasticsearch.yml"
+  logging_params_path: "{{ elasticsearch_directories.elastic_config_dir }}/log4j2.properties"
+  elastic_keystore_file: "{{ elasticsearch_directories.elastic_config_dir }}/elasticsearch.keystore"
+  local_passwords_path: "{{ elasticsearch_local_passwords_dir }}/elastic_passwords.txt"
+  service_file: "/etc/systemd/system/elasticsearch.service"
+
+
+elasticsearch_elastic_user: "elasticsearch"
+elasticsearch_elastic_group: "elasticsearch"
+elasticsearch_vm_max_map_count: "262144"
+
+
+
+
+#########
+truststore_file: "truststore.jks"
+
+
